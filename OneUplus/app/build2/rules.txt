@@ -1,0 +1,11 @@
+-dontobfuscate
+-dontoptimize
+-keepclasseswithmembers class OneUplus {
+  *;
+}
+-keepclasseswithmembers class OneUplusGoogleCarrier {
+  *;
+}
+-keepclassmembers class com.nooriro.oneuplus.proto.googlecarrier.* {
+  <fields>;
+}

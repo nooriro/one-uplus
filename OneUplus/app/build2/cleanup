@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+DIR="$(dirname "$(realpath "$0")")"
+pushd "$DIR" >/dev/null
+rm -rf class classesdex
+popd >/dev/null

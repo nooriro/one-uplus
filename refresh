@@ -1,0 +1,2 @@
+#!/system/bin/sh
+kill "$(/system/bin/toybox ps -A -u radio | grep 'com\.android\.phone' | tr -s ' ' | cut -d ' ' -f 2)"
