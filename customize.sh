@@ -18,7 +18,7 @@ if [ -d /data/adb/modules/one-uplus/settings ]; then
 fi
 
 ui_print "- Setting permissions"
-chmod +x "$MODPATH/on" "$MODPATH/off" "$MODPATH/refresh"
+chmod +x "$MODPATH/switches/on" "$MODPATH/switches/off" "$MODPATH/switches/refresh"
 
 ui_print "- Running one-uplus.sh"
 sh "$MODPATH/scripts/one-uplus.sh"
