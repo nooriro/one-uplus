@@ -1,5 +1,5 @@
 #!/system/bin/sh
-MODDIR="$(dirname "$(realpath "$0")")"
+MODDIR="$(dirname "$(dirname "$(realpath "$0")")")"
 LOGDIR="$MODDIR/logs"
 [ -f "$LOGDIR" ] && rm "$LOGDIR"
 [ -d "$LOGDIR" ] || mkdir -p "$LOGDIR"
@@ -26,7 +26,7 @@ if [ ${#DATETIME} -ne 17 ]; then
   fi
 fi
 
-LOGFILE="$DATETIME-GC"
+LOGFILE="$DATETIME-OU"
 # See: How to check if a variable is set in Bash?
 # https://stackoverflow.com/questions/3601515/how-to-check-if-a-variable-is-set-in-bash
 #   function a {
@@ -38,23 +38,24 @@ LOGFILE="$DATETIME-GC"
 LOGFILE="$LOGFILE.txt"
 LOG="$LOGDIR/$LOGFILE"
 
-rm -r "$MODDIR/system"
+[ -f "$MODDIR/settings/DONTADDVOLTETOXML" ] || OPTION="-v"
 
-if [ -d /product/etc/CarrierSettings ]; then
-  OUTDIR="$MODDIR/system/product/etc/CarrierSettings"
-  mkdir -p "$OUTDIR"
-  # find "$MODDIR/system" -type d -exec chmod 0755 {} \;
-
-  [ -f "$MODDIR/settings/DONTADDVOLTETOPB" ] || OPTION="-v"
-
-  DEX="$MODDIR/classes.dex"
-  API="$(getprop ro.build.version.sdk)"
-  if [ "$API" -ge 26 ]; then
-    /system/bin/app_process -cp "$DEX" "$MODDIR" OneUplusGoogleCarrier $OPTION "$OUTDIR" > "$LOG" 2>&1
-  else
-    CLASSPATH="$DEX" /system/bin/app_process "$MODDIR" OneUplusGoogleCarrier $OPTION "$OUTDIR" > "$LOG" 2>&1
-  fi
+DEX="$MODDIR/scripts/classes.dex"
+API="$(getprop ro.build.version.sdk)"
+if [ "$API" -ge 26 ]; then
+  /system/bin/app_process -cp "$DEX" "$MODDIR" OneUplus $OPTION > "$LOG" 2>&1
+else
+  CLASSPATH="$DEX" /system/bin/app_process "$MODDIR" OneUplus $OPTION > "$LOG" 2>&1
 fi
+
+echo "------------------------------------" >> "$LOG"
+echo "MODDIR=$MODDIR" >> "$LOG"
+echo "LOGDIR=$LOGDIR" >> "$LOG"
+echo "LOG=$LOG" >> "$LOG"
+echo "API=$API" >> "$LOG"
+echo "ASH_STANDALONE=$ASH_STANDALONE" >> "$LOG"
+echo "PWD=$PWD" >> "$LOG"
+echo "PATH=$PATH" >> "$LOG"
 
 if [ -f "$MODDIR/settings/COPYLOG" ]; then
   LOGDIR2="/data/local/tmp/one-uplus-log"

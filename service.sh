@@ -1,5 +1,5 @@
 #!/system/bin/sh
 MODDIR="$(dirname "$(realpath "$0")")"
 if [ ! -f "$MODDIR/settings/NOONEUPLUSONBOOT" ]; then
-  sh "$MODDIR/one-uplus.sh" lss
+  sh "$MODDIR/scripts/one-uplus.sh" lss
 fi

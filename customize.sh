@@ -21,7 +21,7 @@ ui_print "- Setting permissions"
 chmod +x "$MODPATH/on" "$MODPATH/off" "$MODPATH/refresh"
 
 ui_print "- Running one-uplus.sh"
-sh "$MODPATH/one-uplus.sh"
+sh "$MODPATH/scripts/one-uplus.sh"
 
 ui_print "- Killing com.android.phone"
 kill "$(/system/bin/toybox ps -A -u radio | grep 'com\.android\.phone' | tr -s ' ' | cut -d ' ' -f 2)"
@@ -29,7 +29,7 @@ kill "$(/system/bin/toybox ps -A -u radio | grep 'com\.android\.phone' | tr -s '
 if [ -f "$MODPATH/settings/TEST_GOOGLECARRIERATONCE" ]; then
   rm "$MODPATH/settings/TEST_GOOGLECARRIERATONCE"
   ui_print "- Running google-carrier.sh"
-  sh "$MODPATH/google-carrier.sh"
+  sh "$MODPATH/scripts/google-carrier.sh"
   : > "$MODPATH/settings/NOGOOGLECARRIERONBOOT"
 fi
 
@@ -45,5 +45,5 @@ if [ -f "$MODPATH/settings/TEST_REVERTONFINISHINSTALL" ]; then
   sleep "$ADDITIONAL_DELAY"
   
   ui_print "- Running revert.sh"
-  sh "$MODPATH/revert.sh"
+  sh "$MODPATH/scripts/revert.sh"
 fi

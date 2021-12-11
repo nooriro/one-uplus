@@ -40,5 +40,5 @@ if [ ! -f "$MODDIR/settings/NOGOOGLECARRIERONBOOT" ]; then
   fi
   
   [ -n "$TIMEZONE" ] && export TZ="$TIMEZONE"
-  sh "$MODDIR/google-carrier.sh" pfd
+  sh "$MODDIR/scripts/google-carrier.sh" pfd
 fi
