@@ -11,15 +11,15 @@ if [ ${#DATETIME} -ne 17 ]; then
   if [ -n "$TIME" ]; then
     # See: Split string by delimiter and get N-th element
     # https://unix.stackexchange.com/questions/312280/split-string-by-delimiter-and-get-n-th-element/312284#312284
-    S="${TIME%%.*}"   # integral part of $TIME    (seconds)
-    T="${TIME#*.}"    # fractional part of $TIME  (microseconds)
+    TV_SEC="${TIME%%.*}"   # integral part of $TIME    (seconds)
+    TV_USEC="${TIME#*.}"   # fractional part of $TIME  (microseconds)
     # Bypass Nougat's `date` command bug: `-d @UNIXTIME` option prints GMT time instead of local time
     # See: Accessing last x characters of a string in Bash
     # https://stackoverflow.com/questions/19858600/accessing-last-x-characters-of-a-string-in-bash/46292380
-    if [ "${S: -2}" = "${DATETIME:11:2}" ]; then
-      DATETIME="${DATETIME:0:13}-${T:0:3}"
+    if [ "${TV_SEC: -1}" = "${DATETIME:12:1}" ]; then
+      DATETIME="${DATETIME:0:13}-${TV_USEC:0:3}"
     else
-      DATETIME="$(date "+%y%m%d-%H%M%S")-${T:0:3}"
+      DATETIME="$(date "+%y%m%d-%H%M%S")-${TV_USEC:0:3}"
     fi
   else
     DATETIME="${DATETIME:0:13}-000"
