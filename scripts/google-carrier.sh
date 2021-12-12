@@ -3,6 +3,8 @@ MODDIR="$(dirname "$(dirname "$(realpath "$0")")")"
 LOGDIR="$MODDIR/logs"
 [ -f "$LOGDIR" ] && rm "$LOGDIR"
 [ -d "$LOGDIR" ] || mkdir -p "$LOGDIR"
+DEX="$MODDIR/scripts/classes.dex"
+API="$(getprop ro.build.version.sdk)"
 
 DATETIME="$(date "+%y%m%d-%H%M%S-%3N")"
 # Nougat's `date` command does not support nanoseconds format `%N`. Bypass it.
@@ -47,14 +49,23 @@ if [ -d /product/etc/CarrierSettings ]; then
 
   [ -f "$MODDIR/settings/DONTADDVOLTETOPB" ] || OPTION="-v"
 
-  DEX="$MODDIR/scripts/classes.dex"
-  API="$(getprop ro.build.version.sdk)"
   if [ "$API" -ge 26 ]; then
     /system/bin/app_process -cp "$DEX" "$MODDIR" OneUplusGoogleCarrier $OPTION "$OUTDIR" > "$LOG" 2>&1
   else
     CLASSPATH="$DEX" /system/bin/app_process "$MODDIR" OneUplusGoogleCarrier $OPTION "$OUTDIR" > "$LOG" 2>&1
   fi
 fi
+
+echo "------------------------------------" >> "$LOG"
+printf "MODDIR=%s\n"          "$MODDIR"          >> "$LOG"
+printf "LOGDIR=%s\n"          "$LOGDIR"          >> "$LOG"
+printf "LOG=%s\n"             "$LOG"             >> "$LOG"
+printf "DEX=%s\n"             "$DEX"             >> "$LOG"
+printf "API=%s\n"             "$API"             >> "$LOG"
+printf "PWD=%s\n"             "$PWD"             >> "$LOG"
+printf "PATH=%s\n"            "$PATH"            >> "$LOG"
+printf "ASH_STANDALONE=%s\n"  "$ASH_STANDALONE"  >> "$LOG"
+printf "EPOCHREALTIME=%s\n"   "$EPOCHREALTIME"   >> "$LOG"
 
 if [ -f "$MODDIR/settings/COPYLOG" ]; then
   LOGDIR2="/data/local/tmp/one-uplus-log"
