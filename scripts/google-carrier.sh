@@ -1,9 +1,11 @@
 #!/system/bin/sh
-MODDIR="$(dirname "$(dirname "$(realpath "$0")")")"
+THIS="$(realpath "$0")"
+THISDIR="${THIS%/*}"
+MODDIR="${THISDIR%/*}"
 LOGDIR="$MODDIR/logs"
 [ -f "$LOGDIR" ] && rm "$LOGDIR"
 [ -d "$LOGDIR" ] || mkdir -p "$LOGDIR"
-DEX="$MODDIR/scripts/classes.dex"
+DEX="$THISDIR/classes.dex"
 API="$(getprop ro.build.version.sdk)"
 
 DATETIME="$(date "+%y%m%d-%H%M%S-%3N")"
@@ -36,7 +38,7 @@ LOGFILE="$DATETIME-GC"
 #     if [ -z ${1+x} ]; then echo "\$1 is unset"; else echo "\$1 is set to '$1'"; fi
 #   }
 [ -z ${1+x} ] || LOGFILE="$LOGFILE-$1"  # DO NOT USE -n to flip the condition
-[ "$(dirname "$MODDIR")" = /data/adb/modules_update ] && LOGFILE="$LOGFILE-update"
+[ "${MODDIR%/*}" = /data/adb/modules_update ] && LOGFILE="$LOGFILE-update"
 LOGFILE="$LOGFILE.txt"
 LOG="$LOGDIR/$LOGFILE"
 
@@ -50,13 +52,16 @@ if [ -d /product/etc/CarrierSettings ]; then
   [ -f "$MODDIR/settings/DONTADDVOLTETOPB" ] || OPTION="-v"
 
   if [ "$API" -ge 26 ]; then
-    /system/bin/app_process -cp "$DEX" "$MODDIR" OneUplusGoogleCarrier $OPTION "$OUTDIR" > "$LOG" 2>&1
+    /system/bin/app_process -cp "$DEX" "$THISDIR" OneUplusGoogleCarrier $OPTION "$OUTDIR" > "$LOG" 2>&1
   else
-    CLASSPATH="$DEX" /system/bin/app_process "$MODDIR" OneUplusGoogleCarrier $OPTION "$OUTDIR" > "$LOG" 2>&1
+    CLASSPATH="$DEX" /system/bin/app_process "$THISDIR" OneUplusGoogleCarrier $OPTION "$OUTDIR" > "$LOG" 2>&1
   fi
 fi
 
 echo "------------------------------------" >> "$LOG"
+printf "0=%s\n"               "$0"               >> "$LOG"
+printf "THIS=%s\n"            "$THIS"            >> "$LOG"
+printf "THISDIR=%s\n"         "$THISDIR"         >> "$LOG"
 printf "MODDIR=%s\n"          "$MODDIR"          >> "$LOG"
 printf "LOGDIR=%s\n"          "$LOGDIR"          >> "$LOG"
 printf "LOG=%s\n"             "$LOG"             >> "$LOG"

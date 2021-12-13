@@ -1,5 +1,5 @@
 #!/system/bin/sh
-MODDIR="$(dirname "$(realpath "$0")")"
+MODDIR="${0%/*}"
 if [ ! -f "$MODDIR/settings/NOGOOGLECARRIERONBOOT" ]; then
   # See: Unsetting persistent system properties
   # https://stackoverflow.com/questions/16440945/unsetting-persistent-system-properties

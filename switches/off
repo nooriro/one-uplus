@@ -1,4 +1,6 @@
 #!/system/bin/sh
-MODDIR="$(dirname "$(dirname "$(realpath "$0")")")"
+THIS="$(realpath "$0")"
+THISDIR="${THIS%/*}"
+MODDIR="${THISDIR%/*}"
 sh "$MODDIR/scripts/revert.sh"
 kill "$(/system/bin/toybox ps -A -u radio | grep 'com\.android\.phone' | tr -s ' ' | cut -d ' ' -f 2)"
