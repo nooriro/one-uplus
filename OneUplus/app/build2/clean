@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-DIR="$(dirname "$(realpath "$0")")"
-pushd "$DIR" >/dev/null
+cd "${0%/*}"
 rm -rf class classesdex
-popd >/dev/null
+cd - >/dev/null
