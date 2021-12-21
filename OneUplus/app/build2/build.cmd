@@ -1,12 +1,14 @@
 :: JDK: Android Studio 4.0.2 (October 6, 2020) built-in JDK (javac 1.8.0_242-release)
 :: https://developer.android.com/studio/archive
 :: - Method 1: Download installer and install it
-:: - Method 2: Download zip/tar.gz and extract jre folder, and modify JAVA_HOME variable below
+:: - Method 2: Download zip/tar.gz and extract jre folder, and modify below JAVA_HOME variable
 :: 
 :: 89dc11470c0892553ce0ce1f5c3a0389117f00a7  sdk/android-30.jar
 :: https://drive.google.com/drive/folders/17oMwQ0xBcSGn159mgbqxcXXEcneUmnph
+:: 
 :: 3ac913b600589dba649abe56d70889cb797bbb1a  lib/protobuf-javalite-3.19.1.jar
 :: https://search.maven.org/artifact/com.google.protobuf/protobuf-javalite
+:: 
 :: ec7e281caa8aad15793fc4c227cfb91df0c2b60e  d8.jar
 :: https://dl.google.com/android/repository/91936d4ee3ccc839f0addd53c9ebf087b1e39251.build-tools_r30.0.3-windows.zip
 :: https://dl.google.com/android/repository/build-tools_r30.0.3-linux.zip
