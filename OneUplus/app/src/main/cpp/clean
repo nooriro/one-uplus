@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+cd "${0%/*}"
+rm -rf obj libs
+cd - >/dev/null
