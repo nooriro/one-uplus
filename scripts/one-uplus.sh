@@ -1,53 +1,28 @@
 #!/system/bin/sh
 THIS="$(realpath "$0")"
 THISDIR="${THIS%/*}"
+DEX="$THISDIR/classes.dex"
+API="$(getprop ro.build.version.sdk)"
+
 MODDIR="${THISDIR%/*}"
 LOGDIR="$MODDIR/logs"
 [ -f "$LOGDIR" ] && rm "$LOGDIR"
 [ -d "$LOGDIR" ] || mkdir -p "$LOGDIR"
-DEX="$THISDIR/classes.dex"
-API="$(getprop ro.build.version.sdk)"
 
-DATETIME="$(date "+%y%m%d-%H%M%S-%3N")"
-# Nougat's `date` command does not support nanoseconds format `%N`. Bypass it.
-if [ ${#DATETIME} -ne 17 ]; then
-  TIME="$EPOCHREALTIME"
-  if [ -n "$TIME" ]; then
-    # See: Split string by delimiter and get N-th element
-    # https://unix.stackexchange.com/questions/312280/split-string-by-delimiter-and-get-n-th-element/312284#312284
-    TV_SEC="${TIME%%.*}"   # integral part of $TIME    (seconds)
-    TV_USEC="${TIME#*.}"   # fractional part of $TIME  (microseconds)
-    # Bypass Nougat's `date` command bug: `-d @UNIXTIME` option prints GMT time instead of local time
-    # See: Accessing last x characters of a string in Bash
-    # https://stackoverflow.com/questions/19858600/accessing-last-x-characters-of-a-string-in-bash/46292380
-    if [ "${TV_SEC: -1}" = "${DATETIME:12:1}" ]; then
-      DATETIME="${DATETIME:0:13}-${TV_USEC:0:3}"
-    else
-      DATETIME="$(date "+%y%m%d-%H%M%S")-${TV_USEC:0:3}"
-    fi
-  else
-    DATETIME="${DATETIME:0:13}-000"
-  fi
-fi
-
-LOGFILE="$DATETIME-OU"
-# See: How to check if a variable is set in Bash?
-# https://stackoverflow.com/questions/3601515/how-to-check-if-a-variable-is-set-in-bash
-#   function a {
-#     # if $1 is set ?
-#     if [ -z ${1+x} ]; then echo "\$1 is unset"; else echo "\$1 is set to '$1'"; fi
-#   }
+DATETIMEFULL="$("$THISDIR/dtf")"
+LOGFILE="${DATETIMEFULL:2:17}-OU"
 [ -z ${1+x} ] || LOGFILE="$LOGFILE-$1"  # DO NOT USE -n to flip the condition
 [ "${MODDIR%/*}" = /data/adb/modules_update ] && LOGFILE="$LOGFILE-update"
 LOGFILE="$LOGFILE.txt"
 LOG="$LOGDIR/$LOGFILE"
+echo "$DATETIMEFULL" > "$LOG"
 
 [ -f "$MODDIR/settings/DONTADDVOLTETOXML" ] || OPTION="-v"
 
 if [ "$API" -ge 26 ]; then
-  /system/bin/app_process -cp "$DEX" "$THISDIR" OneUplus $OPTION > "$LOG" 2>&1
+  /system/bin/app_process -cp "$DEX" "$THISDIR" OneUplus $OPTION >> "$LOG" 2>&1
 else
-  CLASSPATH="$DEX" /system/bin/app_process "$THISDIR" OneUplus $OPTION > "$LOG" 2>&1
+  CLASSPATH="$DEX" /system/bin/app_process "$THISDIR" OneUplus $OPTION >> "$LOG" 2>&1
 fi
 
 echo "------------------------------------" >> "$LOG"
