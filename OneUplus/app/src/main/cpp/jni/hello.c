@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 //#include <limits.h>
 
 int intlen(int n) {
@@ -19,11 +20,12 @@ int intlen(int n) {
 int main(int argc, char* argv[]) {
     // totallen <-- intlen( maximum of i ) + num of minimal spaces
     const int totallen = intlen(argc - 1) + 1;
-    // intlen(i) + num of spaces == totallen (constant)  for all i
+    // intlen(i) + num of spaces == totallen  (constant for all i)
     for (int i = 0; i < argc; i++) {
         int numsp = totallen - intlen(i);
         fprintf(stderr, "%*sargv %d: [%s]\n", numsp, "", i, argv[i]);
     }
+    usleep(5000);
     for (int i = 0; i < argc; i++) {
         fputs(argv[i], stdout);
         putc('\0', stdout);
