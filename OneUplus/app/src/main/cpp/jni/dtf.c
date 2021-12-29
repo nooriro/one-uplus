@@ -2,12 +2,13 @@
 #include <time.h>
 
 int main(int argc, char* argv[]) {
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    struct tm now;
-    localtime_r(&ts.tv_sec, &now);
+    struct timespec now;
+    clock_gettime(CLOCK_REALTIME, &now);
+    struct tm nowtm;
+    localtime_r(&now.tv_sec, &nowtm);
     char buf[32];
-    strftime(buf, sizeof(buf), "%Y%m%d-%H%M%S", &now);
-    printf("%s-%09ld %d %ld %s\n", buf, ts.tv_nsec, now.tm_isdst, now.tm_gmtoff, now.tm_zone);
+    strftime(buf, sizeof(buf), "%Y%m%d-%H%M%S", &nowtm);
+    printf("%s-%09ld %d %ld %s\n", buf, now.tv_nsec,
+            nowtm.tm_isdst, nowtm.tm_gmtoff, nowtm.tm_zone);
     return 0;
 }
