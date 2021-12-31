@@ -1,6 +1,7 @@
 #!/system/bin/sh
 THIS="$(realpath "$0")"
 THISDIR="${THIS%/*}"
+START="$("$THISDIR/dtf" mono)"
 DEX="$THISDIR/classes.dex"
 API="$(getprop ro.build.version.sdk)"
 
@@ -19,11 +20,13 @@ echo "$DATETIMEFULL" > "$LOG"
 
 [ -f "$MODDIR/settings/DONTADDVOLTETOXML" ] || OPTION="-v"
 
+START_DEX="$("$THISDIR/dtf" mono)"
 if [ "$API" -ge 26 ]; then
   /system/bin/app_process -cp "$DEX" "$THISDIR" OneUplus $OPTION >> "$LOG" 2>&1
 else
   CLASSPATH="$DEX" /system/bin/app_process "$THISDIR" OneUplus $OPTION >> "$LOG" 2>&1
 fi
+ELAPSED_DEX="$("$THISDIR/dtf" mono "$START_DEX")"
 
 echo "------------------------------------" >> "$LOG"
 printf "0=%s\n"               "$0"               >> "$LOG"
@@ -38,6 +41,11 @@ printf "PWD=%s\n"             "$PWD"             >> "$LOG"
 printf "PATH=%s\n"            "$PATH"            >> "$LOG"
 printf "ASH_STANDALONE=%s\n"  "$ASH_STANDALONE"  >> "$LOG"
 printf "EPOCHREALTIME=%s\n"   "$EPOCHREALTIME"   >> "$LOG"
+printf "START=%s\n"           "$START"           >> "$LOG"
+printf "START_DEX=%s\n"       "$START_DEX"       >> "$LOG"
+printf "ELAPSED_DEX=%s\n"     "$ELAPSED_DEX"     >> "$LOG"
+ELAPSED="$("$THISDIR/dtf" mono "$START")"
+printf "ELAPSED=%s\n"         "$ELAPSED"         >> "$LOG"
 
 if [ -f "$MODDIR/settings/COPYLOG" ]; then
   LOGDIR2="/data/local/tmp/one-uplus-log"
