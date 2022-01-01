@@ -114,13 +114,13 @@ void print_orders(struct order orders[], int count, struct config *c) {
             putchar('\0');
             print_order(&orders[i]);
         }
-        if (c->newline) { putchar('\0'); }
+        if (count > 0 && c->newline) { putchar('\0'); }
     } else {
         for (int i = 1; i < count; i++) {
             fputs(c->sep, stdout);
             print_order(&orders[i]);
         }
-        if (c->newline) { putchar('\n'); }
+        if (count > 0 && c->newline) { putchar('\n'); }
     }
 }
 
