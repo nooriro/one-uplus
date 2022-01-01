@@ -1,6 +1,6 @@
 id=one-uplus
 name=One U+
-version=v1.15-20211231
-versionCode=20211231
+version=v1.16-20220101
+versionCode=20220101
 author=nooriro
 description=Take back one and only one ‘LG U+’ carrier name, like AOSP or Nexus 5X/6P. Works on Android 7.0+ (API 24+).
