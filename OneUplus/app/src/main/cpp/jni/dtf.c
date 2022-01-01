@@ -51,7 +51,8 @@ struct precisionpair pps[] = {
 struct order {
     clockid_t clockid;
     int precision;
-    struct timespec prev;
+    long long prev_sec;
+    long prev_nsec;
     struct timespec now;
 };
 
@@ -69,7 +70,7 @@ int print_usage();
 int parse_argv(char* argv[], struct order* orders, int* count, struct config* c);
 int parse_command(const char* str, clockid_t* clockid, int* precision);
 int startswith(const char* str, const char* pre);
-int parse_time(const char* str, struct timespec* ts);
+int parse_time(const char* str, long long* sec, long* nsec);
 
 
 int main(int argc, char* argv[]) {
@@ -124,21 +125,20 @@ void print_orders(struct order orders[], int count, struct config* c) {
 }
 
 void print_order(struct order* o) {
-    struct timespec diff;
-    diff.tv_sec = o->now.tv_sec - o->prev.tv_sec;
-    diff.tv_nsec = o->now.tv_nsec - o->prev.tv_nsec;
-    if (diff.tv_nsec < 0) {
-        diff.tv_nsec += 1000000000;
-        diff.tv_sec--;
+    long long diff_sec = (long long) o->now.tv_sec - o->prev_sec;
+    long diff_nsec = o->now.tv_nsec - o->prev_nsec;
+    if (diff_nsec < 0) {
+        diff_sec--;
+        diff_nsec += 1000000000;
     }
     char buf[MAX_PRECISION + 2];
     if (o->precision > 0) {
-        sprintf(buf, ".%0*ld", MAX_PRECISION, diff.tv_nsec);
+        sprintf(buf, ".%0*ld", MAX_PRECISION, diff_nsec);
         buf[MIN(o->precision, MAX_PRECISION) + 1] = '\0';
     } else {
         buf[0] = '\0';
     }
-    printf("%lld%s", (long long) diff.tv_sec, buf);
+    printf("%lld%s", diff_sec, buf);
 }
 
 int print_resolution() {
@@ -206,15 +206,15 @@ int parse_argv(char* argv[], struct order* orders, int* count, struct config* c)
         } else if (!strcmp(arg, "-n")) {
             c->newline = false;
         } else if (!parse_command(arg, &o->clockid, &o->precision)) { // arg is command?
-            o->prev.tv_sec = 0;
-            o->prev.tv_nsec = 0;
+            o->prev_sec = 0;
+            o->prev_nsec = 0;
             o++;
             (*count)++;
             allowtime = true;
         } else if (!allowtime) {   // time is not allowed?
             fprintf(stderr, "dtf: invalid command: '%s' (see \"dtf -h\")\n", arg);
             return 1;
-        } else if (!parse_time(arg, &(o - 1)->prev)) { // arg is time?
+        } else if (!parse_time(arg, &(o - 1)->prev_sec, &(o - 1)->prev_nsec)) { // arg is time?
             allowtime = false;
         } else {
             fprintf(stderr, "dtf: invalid command or time: '%s' (see \"dtf -h\")\n", arg);
@@ -255,7 +255,7 @@ int startswith(const char* str, const char* pre) {
     return (lenstr < lenpre) ? -1 : memcmp(str, pre, lenpre) ? -1 : lenpre;
 }
 
-int parse_time(const char* str, struct timespec* ts) {
+int parse_time(const char* str, long long* sec, long* nsec) {
     const char* s = str;
     int c = *s++;
     int neg = 0;
@@ -266,10 +266,10 @@ int parse_time(const char* str, struct timespec* ts) {
         c = *s++;
     }
 
-    unsigned long cutoff = neg ? -(unsigned long) LONG_MIN : LONG_MAX;
-    int cutlim = cutoff % 10UL;
-    cutoff /= 10UL;
-    unsigned long acc;
+    unsigned long long cutoff = neg ? -(unsigned long long) LONG_LONG_MIN : LONG_LONG_MAX;
+    int cutlim = cutoff % 10ULL;
+    cutoff /= 10ULL;
+    unsigned long long acc;
     int any;
     for (acc = 0, any = 0;; c = *s++) {
         if (c >= '0' && c <= '9') {
@@ -289,17 +289,14 @@ int parse_time(const char* str, struct timespec* ts) {
     if (any == 0 || (c != '.' && c != '\0')) return ERROR_NUMBER_FORMAT_INVALID_SEC;
     if (any < 0) return neg ? ERROR_NUMBER_OUTOFRANGE_BELOW : ERROR_NUMBER_OUTOFRANGE_ABOVE;
 
-    long tv_sec = neg ? -acc : acc;
-
     if (c == '\0') {
-        if (ts) {
-            ts->tv_sec = tv_sec;
-            ts->tv_nsec = 0;
-        }
+        if (sec) { *sec = neg ? -acc : acc; }
+        if (nsec) { *nsec = 0; }
     } else {  // c == '.'
+        long acc2;
         int i = 0;
         c = *s++;
-        for (acc = 0, any = 0;; c = *s++, i++) {
+        for (acc2 = 0, any = 0;; c = *s++, i++) {
             if (c >= '0' && c <= '9') {
                 c -= '0';
             } else {
@@ -307,16 +304,14 @@ int parse_time(const char* str, struct timespec* ts) {
             }
             any = 1;
             if (i < MAX_PRECISION) {
-                acc *= 10;
-                acc += c;
+                acc2 *= 10;
+                acc2 += c;
             }
         }
         if (any == 0 || c != '\0') return ERROR_NUMBER_FORMAT_INVALID_NSEC;
-        for (; i < MAX_PRECISION; i++) { acc *= 10; }
-        if (ts) {
-            ts->tv_sec = tv_sec;
-            ts->tv_nsec = acc;
-        }
+        for (; i < MAX_PRECISION; i++) { acc2 *= 10; }
+        if (sec) { *sec = neg ? -acc : acc; }
+        if (nsec) { *nsec = acc2; }
     }
     return 0;
 }
