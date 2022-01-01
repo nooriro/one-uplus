@@ -16,7 +16,7 @@
 #define ARRAYSIZE(x)     (sizeof(x) / sizeof((x)[0]))
 
 struct clockpair {
-    char*     key;
+    char *key;
     clockid_t clockid;
 };
 
@@ -36,8 +36,8 @@ struct clockpair cps[] = {
 };
 
 struct precisionpair {
-    char*     key;
-    int       precision;
+    char *key;
+    int precision;
 };
 
 struct precisionpair pps[] = {
@@ -57,25 +57,25 @@ struct order {
 };
 
 struct config {
-    char* sep;
+    char *sep;
     bool nulsep;
     bool newline;
 };
 
-void print_orders(struct order orders[], int count, struct config* c);
-void print_order(struct order* o);
+void print_orders(struct order orders[], int count, struct config *c);
+void print_order(struct order *o);
 int print_resolution();
 int print_usage();
 
-int parse_argv(char* argv[], struct order* orders, int* count, struct config* c);
-int parse_command(const char* str, clockid_t* clockid, int* precision);
-int startswith(const char* str, const char* pre);
-int parse_time(const char* str, long long* sec, long* nsec);
+int parse_argv(char *argv[], struct order *orders, int *count, struct config *c);
+int parse_command(const char *str, clockid_t *clockid, int *precision);
+int startswith(const char *str, const char *pre);
+int parse_time(const char *str, long long *sec, long *nsec);
 
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
     if (argc >= 2) {
-        struct order* orders = malloc(sizeof(struct order) * (argc - 1));
+        struct order *orders = malloc(sizeof(struct order) * (argc - 1));
         int count;
         struct config c;
         int ret = parse_argv(argv, orders, &count, &c);
@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-void print_orders(struct order orders[], int count, struct config* c) {
+void print_orders(struct order orders[], int count, struct config *c) {
     for (int i = 0; i < count; i++) {
         orders[i].now.tv_sec = 0;
         orders[i].now.tv_nsec = 0;
@@ -124,7 +124,7 @@ void print_orders(struct order orders[], int count, struct config* c) {
     }
 }
 
-void print_order(struct order* o) {
+void print_order(struct order *o) {
     long long diff_sec = (long long) o->now.tv_sec - o->prev_sec;
     long diff_nsec = o->now.tv_nsec - o->prev_nsec;
     if (diff_nsec < 0) {
@@ -179,16 +179,16 @@ int print_usage() {
     return 1;
 }
 
-int parse_argv(char* argv[], struct order* orders, int* count, struct config* c) {
+int parse_argv(char *argv[], struct order *orders, int *count, struct config *c) {
     c->sep = "\n";
     c->nulsep = false;
     c->newline = true;
     *count = 0;
 
-    struct order* o = orders;
+    struct order *o = orders;
     bool allowtime = false;
-    char** p = &argv[1];
-    char* arg = *p++;
+    char **p = &argv[1];
+    char *arg = *p++;
     for (; arg; arg = *p++) {
         if (!strcmp(arg, "-h")) {
             *count = 0;
@@ -199,7 +199,8 @@ int parse_argv(char* argv[], struct order* orders, int* count, struct config* c)
         } else if (!strcmp(arg, "-d")) {
             arg = *p++;
             if (!arg) {
-                fprintf(stderr, "dtf: no option parameter for '-d' (must provide \"-d DELIMETER\")\n");
+                fprintf(stderr,
+                        "dtf: no option parameter for '-d' (must provide \"-d DELIMETER\")\n");
                 return 1;
             }
             c->sep = arg;
@@ -237,7 +238,7 @@ int parse_argv(char* argv[], struct order* orders, int* count, struct config* c)
     return 0;
 }
 
-int parse_command(const char* str, clockid_t* clockid, int* precision) {
+int parse_command(const char *str, clockid_t *clockid, int *precision) {
     for (int i = 0; i < ARRAYSIZE(cps); i++) {
         int len = startswith(str, cps[i].key);
         if (len < 0) continue;
@@ -251,14 +252,14 @@ int parse_command(const char* str, clockid_t* clockid, int* precision) {
     return 1;
 }
 
-int startswith(const char* str, const char* pre) {
+int startswith(const char *str, const char *pre) {
     int lenstr = strlen(str);
     int lenpre = strlen(pre);
     return (lenstr < lenpre) ? -1 : memcmp(str, pre, lenpre) ? -1 : lenpre;
 }
 
-int parse_time(const char* str, long long* sec, long* nsec) {
-    const char* s = str;
+int parse_time(const char *str, long long *sec, long *nsec) {
+    const char *s = str;
     int c = *s++;
     int neg = 0;
     if (c == '-') {

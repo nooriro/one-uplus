@@ -17,7 +17,7 @@ int intlen(int n) {
     return 10; // INT_MAX == 2147483647 is ten-digit
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
     // totallen <-- intlen( maximum of i ) + num of minimal spaces
     const int totallen = intlen(argc - 1) + 1;
     // intlen(i) + num of spaces == totallen  (constant for all i)
