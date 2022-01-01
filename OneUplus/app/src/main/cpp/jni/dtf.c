@@ -41,7 +41,7 @@ struct precisionpair {
 };
 
 struct precisionpair pps[] = {
-        {"", MAX_PRECISION},
+        {"", MAX_PRECISION}, {"+", -1},
         {"-ns", 9}, {"-us", 6}, {"-ms", 3},
         {"-nano", 9}, {"-micro", 6}, {"-milli", 3},
         {"9", 9}, {"8", 8}, {"7", 7}, {"6", 6}, {"5", 5},
@@ -131,6 +131,16 @@ void print_order(struct order *o) {
         diff_sec--;
         diff_nsec += 1000000000;
     }
+    if (o->precision == -1) {
+        time_t t = (time_t) diff_sec;
+        struct tm tm;
+        localtime_r(&t, &tm);
+        char buf[32];
+        strftime(buf, sizeof(buf), "%Y%m%d-%H%M%S", &tm);
+        printf("%s-%09ld %d %ld %s", buf, diff_nsec,
+               tm.tm_isdst, tm.tm_gmtoff, tm.tm_zone);
+        return;
+    }
     char buf[MAX_PRECISION + 2];
     if (o->precision > 0) {
         sprintf(buf, ".%0*ld", MAX_PRECISION, diff_nsec);
@@ -209,6 +219,10 @@ int parse_argv(char *argv[], struct order *orders, int *count, struct config *c)
         } else if (!strcmp(arg, "-n")) {
             c->newline = false;
         } else if (!parse_command(arg, &o->clockid, &o->precision)) { // arg is command?
+            if (o->precision == -1 && o->clockid != 0) {
+                fprintf(stderr, "dtf: invalid command: '%s' ('+' is only available with 'real')\n", arg);
+                return 1;
+            }
             o->prev_sec = 0;
             o->prev_nsec = 0;
             o++;
@@ -229,7 +243,7 @@ int parse_argv(char *argv[], struct order *orders, int *count, struct config *c)
 //    printf("c->newline=%s\n", c->newline ? "true" : "false");
 //    for (o = orders; o < orders + *count; o++) {
 //        printf("clockid=%d  precision=%d  sec=%lld  nsec=%09ld\n",
-//               o->clockid, o->precision, (long long) o->prev.tv_sec, o->prev.tv_nsec);
+//               o->clockid, o->precision, (long long) o->prev_sec, o->prev_nsec);
 //    }
     if (*count == 0) {
         fprintf(stderr, "dtf: no command (see \"dtf -h\")\n");
