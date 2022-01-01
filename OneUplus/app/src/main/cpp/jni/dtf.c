@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
         int count;
         struct config c;
         int ret = parse_argv(argv, orders, &count, &c);
-        if (!ret) {
+        if (!ret && count > 0) {
             print_orders(orders, count, &c);
         }
         free(orders);
@@ -191,8 +191,10 @@ int parse_argv(char* argv[], struct order* orders, int* count, struct config* c)
     char* arg = *p++;
     for (; arg; arg = *p++) {
         if (!strcmp(arg, "-h")) {
+            *count = 0;
             return print_usage();
         } else if (!strcmp(arg, "-r") || !strcmp(arg, "res")) {
+            *count = 0;
             return print_resolution();
         } else if (!strcmp(arg, "-d")) {
             arg = *p++;
