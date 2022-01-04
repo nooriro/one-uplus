@@ -62,12 +62,12 @@ struct config {
     bool newline;
 };
 
-int parse_argv(char *argv[], struct order *orders, int *count, struct config *c);
+int parse_argv(char *argv[], struct order *orders, int *count, struct config *conf);
 int parse_command(const char *str, clockid_t *clockid, int *precision);
 int startswith(const char *str, const char *pre);
 int parse_time(const char *str, long long *sec, long *nsec);
 
-void print_orders(struct order orders[], int count, struct config *c);
+void print_orders(struct order orders[], int count, struct config *conf);
 void print_order(struct order *o);
 int print_resolution();
 int print_usage();
@@ -77,10 +77,10 @@ int main(int argc, char *argv[]) {
     if (argc >= 2) {
         struct order *orders = malloc(sizeof(struct order) * (argc - 1));
         int count;
-        struct config c;
-        int ret = parse_argv(argv, orders, &count, &c);
+        struct config conf;
+        int ret = parse_argv(argv, orders, &count, &conf);
         if (!ret && count > 0) {
-            print_orders(orders, count, &c);
+            print_orders(orders, count, &conf);
         }
         free(orders);
         return ret;
@@ -97,10 +97,10 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-int parse_argv(char *argv[], struct order *orders, int *count, struct config *c) {
-    c->sep = "\n";
-    c->nulsep = false;
-    c->newline = true;
+int parse_argv(char *argv[], struct order *orders, int *count, struct config *conf) {
+    conf->sep = "\n";
+    conf->nulsep = false;
+    conf->newline = true;
     *count = 0;
 
     struct order *o = orders;
@@ -121,11 +121,11 @@ int parse_argv(char *argv[], struct order *orders, int *count, struct config *c)
                         "dtf: no option parameter for '-d' (must provide \"-d DELIMETER\")\n");
                 return 1;
             }
-            c->sep = arg;
+            conf->sep = arg;
         } else if (!strcmp(arg, "-0")) {
-            c->nulsep = true;
+            conf->nulsep = true;
         } else if (!strcmp(arg, "-n")) {
-            c->newline = false;
+            conf->newline = false;
         } else if (!parse_command(arg, &o->clockid, &o->precision)) { // arg is command?
             if (o->precision == -1 && o->clockid != 0) {
                 fprintf(stderr, "dtf: invalid command: '%s' ('+' is only available with 'real')\n", arg);
@@ -146,9 +146,9 @@ int parse_argv(char *argv[], struct order *orders, int *count, struct config *c)
             return 1;
         }
     }
-//    printf("c->sep='%s'\n", c->sep);
-//    printf("c->nulsep=%s\n", c->nulsep ? "true" : "false");
-//    printf("c->newline=%s\n", c->newline ? "true" : "false");
+//    printf("conf->sep='%s'\n", conf->sep);
+//    printf("conf->nulsep=%s\n", conf->nulsep ? "true" : "false");
+//    printf("conf->newline=%s\n", conf->newline ? "true" : "false");
 //    for (o = orders; o < orders + *count; o++) {
 //        printf("clockid=%d  precision=%d  sec=%lld  nsec=%09ld\n",
 //               o->clockid, o->precision, (long long) o->prev_sec, o->prev_nsec);
@@ -241,7 +241,7 @@ int parse_time(const char *str, long long *sec, long *nsec) {
     return 0;
 }
 
-void print_orders(struct order orders[], int count, struct config *c) {
+void print_orders(struct order orders[], int count, struct config *conf) {
     for (int i = 0; i < count; i++) {
         orders[i].now.tv_sec = 0;
         orders[i].now.tv_nsec = 0;
@@ -253,18 +253,18 @@ void print_orders(struct order orders[], int count, struct config *c) {
     for (int i = 0; i < MIN(count, 1); i++) {
         print_order(&orders[i]);
     }
-    if (c->nulsep) {
+    if (conf->nulsep) {
         for (int i = 1; i < count; i++) {
             putchar('\0');
             print_order(&orders[i]);
         }
-        if (count > 0 && c->newline) { putchar('\0'); }
+        if (count > 0 && conf->newline) { putchar('\0'); }
     } else {
         for (int i = 1; i < count; i++) {
-            fputs(c->sep, stdout);
+            fputs(conf->sep, stdout);
             print_order(&orders[i]);
         }
-        if (count > 0 && c->newline) { putchar('\n'); }
+        if (count > 0 && conf->newline) { putchar('\n'); }
     }
 }
 
