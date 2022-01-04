@@ -62,15 +62,15 @@ struct config {
     bool newline;
 };
 
-void print_orders(struct order orders[], int count, struct config *c);
-void print_order(struct order *o);
-int print_resolution();
-int print_usage();
-
 int parse_argv(char *argv[], struct order *orders, int *count, struct config *c);
 int parse_command(const char *str, clockid_t *clockid, int *precision);
 int startswith(const char *str, const char *pre);
 int parse_time(const char *str, long long *sec, long *nsec);
+
+void print_orders(struct order orders[], int count, struct config *c);
+void print_order(struct order *o);
+int print_resolution();
+int print_usage();
 
 
 int main(int argc, char *argv[]) {
@@ -95,98 +95,6 @@ int main(int argc, char *argv[]) {
     printf("%s-%09ld %d %ld %s\n", buf, now.tv_nsec,
            nowtm.tm_isdst, nowtm.tm_gmtoff, nowtm.tm_zone);
     return 0;
-}
-
-void print_orders(struct order orders[], int count, struct config *c) {
-    for (int i = 0; i < count; i++) {
-        orders[i].now.tv_sec = 0;
-        orders[i].now.tv_nsec = 0;
-    }
-    for (int i = 0; i < count; i++) {
-        clock_gettime(orders[i].clockid, &orders[i].now);
-    }
-
-    for (int i = 0; i < MIN(count, 1); i++) {
-        print_order(&orders[i]);
-    }
-    if (c->nulsep) {
-        for (int i = 1; i < count; i++) {
-            putchar('\0');
-            print_order(&orders[i]);
-        }
-        if (count > 0 && c->newline) { putchar('\0'); }
-    } else {
-        for (int i = 1; i < count; i++) {
-            fputs(c->sep, stdout);
-            print_order(&orders[i]);
-        }
-        if (count > 0 && c->newline) { putchar('\n'); }
-    }
-}
-
-void print_order(struct order *o) {
-    long long diff_sec = (long long) o->now.tv_sec - o->prev_sec;
-    long diff_nsec = o->now.tv_nsec - o->prev_nsec;
-    if (diff_nsec < 0) {
-        diff_sec--;
-        diff_nsec += 1000000000;
-    }
-    if (o->precision == -1) {
-        time_t t = (time_t) diff_sec;
-        struct tm tm;
-        localtime_r(&t, &tm);
-        char buf[32];
-        strftime(buf, sizeof(buf), "%Y%m%d-%H%M%S", &tm);
-        printf("%s-%09ld %d %ld %s", buf, diff_nsec,
-               tm.tm_isdst, tm.tm_gmtoff, tm.tm_zone);
-        return;
-    }
-    char buf[MAX_PRECISION + 2];
-    if (o->precision > 0) {
-        sprintf(buf, ".%0*ld", MAX_PRECISION, diff_nsec);
-        buf[MIN(o->precision, MAX_PRECISION) + 1] = '\0';
-    } else {
-        buf[0] = '\0';
-    }
-    printf("%lld%s", diff_sec, buf);
-}
-
-int print_resolution() {
-    struct clockpair clocks[] = {
-            {"CLOCK_REALTIME", CLOCK_REALTIME},
-            {"CLOCK_MONOTONIC", CLOCK_MONOTONIC},
-            {"CLOCK_PROCESS_CPUTIME_ID", CLOCK_PROCESS_CPUTIME_ID},
-            {"CLOCK_THREAD_CPUTIME_ID", CLOCK_THREAD_CPUTIME_ID},
-            {"CLOCK_MONOTONIC_RAW", CLOCK_MONOTONIC_RAW},
-            {"CLOCK_REALTIME_COARSE", CLOCK_REALTIME_COARSE},
-            {"CLOCK_MONOTONIC_COARSE", CLOCK_MONOTONIC_COARSE},
-            {"CLOCK_BOOTTIME", CLOCK_BOOTTIME},
-            {"CLOCK_REALTIME_ALARM", CLOCK_REALTIME_ALARM},
-            {"CLOCK_BOOTTIME_ALARM", CLOCK_BOOTTIME_ALARM},
-            {"CLOCK_SGI_CYCLE", CLOCK_SGI_CYCLE},
-            {"CLOCK_TAI", CLOCK_TAI}
-    };
-    for (int i = 0; i < ARRAYSIZE(clocks); i++) {
-        struct timespec res;
-        res.tv_nsec = 0;
-        clock_getres(clocks[i].clockid, &res);
-        printf("%s(%d): %ldns\n", clocks[i].key, clocks[i].clockid, res.tv_nsec);
-    }
-    return 0;
-}
-
-int print_usage() {
-    fputs("Usage: dtf [OPTION]... [COMMAND [TIME]]...\n"
-          "    Print current time (or time diff to current time) of given clock(s).\n"
-          "    OPTION: -h|-r|res|-d DELIMETER|-0|-n\n"
-          "    COMMAND: CLOCK[PRECISION]\n"
-          "             CLOCK: real|mono|pcpu|tcpu|monoraw|realcoa|monocoa|boot or 0c..15c\n"
-          "             PRECISION: -ns|-us|-ms|-nano|-micro|-milli or 0..9\n"
-          "    TIME: SECONDS[.NANOSECONDS]\n"
-          "          print time diff (now - TIME) instead of current time\n"
-          "    If no argument is provided, dtf prints current local time as human-readable format.\n",
-          stderr);
-    return 1;
 }
 
 int parse_argv(char *argv[], struct order *orders, int *count, struct config *c) {
@@ -331,4 +239,96 @@ int parse_time(const char *str, long long *sec, long *nsec) {
         if (nsec) { *nsec = acc2; }
     }
     return 0;
+}
+
+void print_orders(struct order orders[], int count, struct config *c) {
+    for (int i = 0; i < count; i++) {
+        orders[i].now.tv_sec = 0;
+        orders[i].now.tv_nsec = 0;
+    }
+    for (int i = 0; i < count; i++) {
+        clock_gettime(orders[i].clockid, &orders[i].now);
+    }
+
+    for (int i = 0; i < MIN(count, 1); i++) {
+        print_order(&orders[i]);
+    }
+    if (c->nulsep) {
+        for (int i = 1; i < count; i++) {
+            putchar('\0');
+            print_order(&orders[i]);
+        }
+        if (count > 0 && c->newline) { putchar('\0'); }
+    } else {
+        for (int i = 1; i < count; i++) {
+            fputs(c->sep, stdout);
+            print_order(&orders[i]);
+        }
+        if (count > 0 && c->newline) { putchar('\n'); }
+    }
+}
+
+void print_order(struct order *o) {
+    long long diff_sec = (long long) o->now.tv_sec - o->prev_sec;
+    long diff_nsec = o->now.tv_nsec - o->prev_nsec;
+    if (diff_nsec < 0) {
+        diff_sec--;
+        diff_nsec += 1000000000;
+    }
+    if (o->precision == -1) {
+        time_t t = (time_t) diff_sec;
+        struct tm tm;
+        localtime_r(&t, &tm);
+        char buf[32];
+        strftime(buf, sizeof(buf), "%Y%m%d-%H%M%S", &tm);
+        printf("%s-%09ld %d %ld %s", buf, diff_nsec,
+               tm.tm_isdst, tm.tm_gmtoff, tm.tm_zone);
+        return;
+    }
+    char buf[MAX_PRECISION + 2];
+    if (o->precision > 0) {
+        sprintf(buf, ".%0*ld", MAX_PRECISION, diff_nsec);
+        buf[MIN(o->precision, MAX_PRECISION) + 1] = '\0';
+    } else {
+        buf[0] = '\0';
+    }
+    printf("%lld%s", diff_sec, buf);
+}
+
+int print_resolution() {
+    struct clockpair clocks[] = {
+            {"CLOCK_REALTIME", CLOCK_REALTIME},
+            {"CLOCK_MONOTONIC", CLOCK_MONOTONIC},
+            {"CLOCK_PROCESS_CPUTIME_ID", CLOCK_PROCESS_CPUTIME_ID},
+            {"CLOCK_THREAD_CPUTIME_ID", CLOCK_THREAD_CPUTIME_ID},
+            {"CLOCK_MONOTONIC_RAW", CLOCK_MONOTONIC_RAW},
+            {"CLOCK_REALTIME_COARSE", CLOCK_REALTIME_COARSE},
+            {"CLOCK_MONOTONIC_COARSE", CLOCK_MONOTONIC_COARSE},
+            {"CLOCK_BOOTTIME", CLOCK_BOOTTIME},
+            {"CLOCK_REALTIME_ALARM", CLOCK_REALTIME_ALARM},
+            {"CLOCK_BOOTTIME_ALARM", CLOCK_BOOTTIME_ALARM},
+            {"CLOCK_SGI_CYCLE", CLOCK_SGI_CYCLE},
+            {"CLOCK_TAI", CLOCK_TAI}
+    };
+    for (int i = 0; i < ARRAYSIZE(clocks); i++) {
+        struct timespec res;
+        res.tv_nsec = 0;
+        clock_getres(clocks[i].clockid, &res);
+        printf("%s(%d): %ldns\n", clocks[i].key, clocks[i].clockid, res.tv_nsec);
+    }
+    return 0;
+}
+
+int print_usage() {
+    fputs("Usage: dtf [OPTION]... [COMMAND [TIME]]...\n"
+          "    Print current time (or time diff to current time) of given clock(s).\n"
+          "    OPTION: -h|-r|res|-d DELIMETER|-0|-n\n"
+          "    COMMAND: CLOCK[PRECISION]\n"
+          "             CLOCK: real|mono|pcpu|tcpu|monoraw|realcoa|monocoa|boot or 0c..15c\n"
+          "             PRECISION: -ns|-us|-ms|-nano|-micro|-milli or 0..9\n"
+          "    TIME: SECONDS[.NANOSECONDS]\n"
+          "          print time diff (now - TIME) instead of current time\n"
+          "    If no argument is provided, dtf prints current local time as human-readable format.\n",
+          stderr);
+    return 1;
 }
