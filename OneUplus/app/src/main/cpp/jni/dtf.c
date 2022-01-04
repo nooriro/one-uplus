@@ -253,23 +253,23 @@ void print_orders(struct order orders[], int count, struct config *conf) {
     if (conf->nulsep) {
         int i = 0;
         for (; i < count - 1; i++) {
-            print_order(&orders[i]); 
-            putchar('\0'); 
-        } 
+            print_order(&orders[i]);
+            putchar('\0');
+        }
         for (; i < count; i++) {
-            print_order(&orders[i]); 
+            print_order(&orders[i]);
             if (conf->newline) { putchar('\0'); }
-        } 
+        }
     } else {
         int i = 0;
         for (; i < count - 1; i++) {
-            print_order(&orders[i]); 
-            fputs(conf->sep, stdout); 
-        } 
+            print_order(&orders[i]);
+            fputs(conf->sep, stdout);
+        }
         for (; i < count; i++) {
-            print_order(&orders[i]); 
+            print_order(&orders[i]);
             if (conf->newline) { putchar('\n'); }
-        } 
+        }
     }
 }
 
