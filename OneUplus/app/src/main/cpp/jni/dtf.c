@@ -250,21 +250,26 @@ void print_orders(struct order orders[], int count, struct config *conf) {
         clock_gettime(orders[i].clockid, &orders[i].now);
     }
 
-    for (int i = 0; i < MIN(count, 1); i++) {
-        print_order(&orders[i]);
-    }
     if (conf->nulsep) {
-        for (int i = 1; i < count; i++) {
-            putchar('\0');
-            print_order(&orders[i]);
-        }
-        if (count > 0 && conf->newline) { putchar('\0'); }
+        int i = 0;
+        for (; i < count - 1; i++) {
+            print_order(&orders[i]); 
+            putchar('\0'); 
+        } 
+        for (; i < count; i++) {
+            print_order(&orders[i]); 
+            if (conf->newline) { putchar('\0'); }
+        } 
     } else {
-        for (int i = 1; i < count; i++) {
-            fputs(conf->sep, stdout);
-            print_order(&orders[i]);
-        }
-        if (count > 0 && conf->newline) { putchar('\n'); }
+        int i = 0;
+        for (; i < count - 1; i++) {
+            print_order(&orders[i]); 
+            fputs(conf->sep, stdout); 
+        } 
+        for (; i < count; i++) {
+            print_order(&orders[i]); 
+            if (conf->newline) { putchar('\n'); }
+        } 
     }
 }
 
