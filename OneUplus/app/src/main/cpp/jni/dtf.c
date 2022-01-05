@@ -127,7 +127,7 @@ int parse_argv(char *argv[], struct order *orders, int *count, struct config *co
                     return 1;
                 }
                 continue;
-            } 
+            }
             // Do not treat negative time value as an option
             if (parse_time(arg, NULL, NULL) != 0) {
                 // Check invalid option character before processing
@@ -168,9 +168,9 @@ int parse_argv(char *argv[], struct order *orders, int *count, struct config *co
                         case 'z': conf->nulsep = true; break;
                         case 'n': conf->newline = false; break;
                         default: break;
-                    } 
-                } 
-            } 
+                    }
+                }
+            }
         } else if (!parse_command(arg, &o->clockid, &o->precision)) { // arg is command?
             if (o->precision == -1 && o->clockid != 0) {
                 fprintf(stderr, "dtf: invalid command: '%s' ('+' is only available with 'real')\n", arg);
