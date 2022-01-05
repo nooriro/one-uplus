@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 void set_default_config(struct config *conf) {
     if (conf) {
         // default config values
-        conf->sep = "\n";        // field separator(=delimeter) string
+        conf->sep = "\n";        // field separator(=delimiter) string
         conf->nulsep = false;    // use nul('\0') character instead of conf->sep
         conf->newline = true;    // print trailing newline (or nul) at the end of record
     }
@@ -164,7 +164,7 @@ int parse_argv(char *argv[], struct order *orders, int *count, struct config *co
                                 arg = *p++;
                                 conf->sep = arg;
                             } else {
-                                fprintf(stderr, "dtf: option 'd' requires DELIMETER (see \"dtf -h\")\n");
+                                fprintf(stderr, "dtf: option 'd' requires DELIMITER (see \"dtf -h\")\n");
                                 return 1;
                             }
                             break;
@@ -375,7 +375,7 @@ int print_resolution() {
 int print_usage() {
     fputs("Usage: dtf [OPTION]... [COMMAND [TIME]]...\n"
           "    Print current time (or time diff to current time) of given clock(s).\n"
-          "    OPTION: -h|-r|-d DELIMETER|-z|-n|--help|--res|--resolution\n"
+          "    OPTION: -h|-r|-d DELIMITER|-z|-n|--help|--res|--resolution\n"
           "    COMMAND: CLOCK[PRECISION]\n"
           "             CLOCK: real|mono|pcpu|tcpu|monoraw|realcoa|monocoa|boot or 0c..15c\n"
           "             PRECISION: -ns|-us|-ms|-nano|-micro|-milli or 0..9 or +\n"
