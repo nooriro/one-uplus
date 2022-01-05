@@ -374,15 +374,15 @@ int print_resolution() {
 
 int print_usage() {
     fputs("Usage: dtf [OPTION]... [COMMAND [TIME]]...\n"
-          "    Print current time (or time diff to current time) of given clock(s).\n\n"
-          "    OPTION: -h|-r|-d DELIMETER|-z|-n or --help|--res|--resolution\n"
+          "    Print current time (or time diff to current time) of given clock(s).\n"
+          "    OPTION: -h|-r|-d DELIMETER|-z|-n|--help|--res|--resolution\n"
           "    COMMAND: CLOCK[PRECISION]\n"
           "             CLOCK: real|mono|pcpu|tcpu|monoraw|realcoa|monocoa|boot or 0c..15c\n"
-          "             PRECISION: -ns|-us|-ms or -nano|-micro|-milli or 0..9\n"
-          "                        special PRECISION '+' is only for 'real'\n"
+          "             PRECISION: -ns|-us|-ms|-nano|-micro|-milli or 0..9 or +\n"
+          "             '+' is special PRECISION & only for 'real'\n"
           "    TIME: SECONDS[.NANOSECONDS]\n"
-          "          print time diff (now - TIME) instead of current time\n\n"
-          "    If no argument is provided, dtf behaves as \"dtf real+\".\n",
+          "          print time diff (now - TIME) instead of current time\n"
+          "    If no argument is given, dtf behaves as \"dtf real+\".\n",
           stderr);
     return 1;
 }
