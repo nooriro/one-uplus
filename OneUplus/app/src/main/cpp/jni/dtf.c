@@ -98,34 +98,79 @@ int main(int argc, char *argv[]) {
 }
 
 int parse_argv(char *argv[], struct order *orders, int *count, struct config *conf) {
-    conf->sep = "\n";
-    conf->nulsep = false;
-    conf->newline = true;
+    // default config values
+    conf->sep = "\n";        // field separator(=delimeter) string
+    conf->nulsep = false;    // use nul('\0') character instead of conf->sep
+    conf->newline = true;    // print trailing newline (or nul) at the end of record
     *count = 0;
 
     struct order *o = orders;
+    bool allowopt = true;
     bool allowtime = false;
     char **p = &argv[1];
     char *arg = *p++;
     for (; arg; arg = *p++) {
-        if (!strcmp(arg, "-h")) {
-            *count = 0;
-            return print_usage();
-        } else if (!strcmp(arg, "-r") || !strcmp(arg, "res")) {
-            *count = 0;
-            return print_resolution();
-        } else if (!strcmp(arg, "-d")) {
-            arg = *p++;
-            if (!arg) {
-                fprintf(stderr,
-                        "dtf: no option parameter for '-d' (must provide \"-d DELIMETER\")\n");
-                return 1;
-            }
-            conf->sep = arg;
-        } else if (!strcmp(arg, "-0")) {
-            conf->nulsep = true;
-        } else if (!strcmp(arg, "-n")) {
-            conf->newline = false;
+        if (allowopt && arg[0] == '-' && arg[1] != '\0') { // arg is option (candidate)?
+            char *s = &arg[1];
+            char c = *s++;
+            // Process "--" option first
+            if (c == '-') {  // arg starts with "--"?
+                if (!(*s)) {  // arg is exactly "--"?
+                    allowopt = false;
+                } else if (!strcmp(s, "help")) {
+                    return print_usage();
+                } else if (!strcmp(s, "res") || !strcmp(s, "resolution")) {
+                    *count = 0;
+                    return print_resolution();
+                } else {
+                    fprintf(stderr, "dtf: invalid option '%s' (see \"dtf -h\")\n", s);
+                    return 1;
+                }
+                continue;
+            } 
+            // Do not treat negative time value as an option
+            if (parse_time(arg, NULL, NULL) != 0) {
+                // Check invalid option character before processing
+                for (; c; c = *s++) {
+                    switch (c) {
+                        case 'h':
+                        case 'r':
+                        case 'z':
+                        case 'n':
+                            break;
+                        case 'd':
+                            s += strlen(s);  // Do not check extra characters
+                            break;
+                        default:
+                            fprintf(stderr, "dtf: invalid option '%c' (see \"dtf -h\")\n", c);
+                            return 1;
+                    }
+                }
+                // Process each option character
+                s = &arg[1];
+                c = *s++;
+                for (; c; c = *s++) {
+                    switch (c) {
+                        case 'h': return print_usage();
+                        case 'r': *count = 0; return print_resolution();
+                        case 'd':
+                            if (*s != '\0') {  // has extra characters?
+                                conf->sep = s;
+                                s += strlen(s);
+                            } else if (*p) {  // has next arg?
+                                arg = *p++;
+                                conf->sep = arg;
+                            } else {
+                                fprintf(stderr, "dtf: option 'd' requires DELIMETER (see \"dtf -h\")\n");
+                                return 1;
+                            }
+                            break;
+                        case 'z': conf->nulsep = true; break;
+                        case 'n': conf->newline = false; break;
+                        default: break;
+                    } 
+                } 
+            } 
         } else if (!parse_command(arg, &o->clockid, &o->precision)) { // arg is command?
             if (o->precision == -1 && o->clockid != 0) {
                 fprintf(stderr, "dtf: invalid command: '%s' ('+' is only available with 'real')\n", arg);
@@ -326,13 +371,14 @@ int print_resolution() {
 
 int print_usage() {
     fputs("Usage: dtf [OPTION]... [COMMAND [TIME]]...\n"
-          "    Print current time (or time diff to current time) of given clock(s).\n"
-          "    OPTION: -h|-r|res|-d DELIMETER|-0|-n\n"
+          "    Print current time (or time diff to current time) of given clock(s).\n\n"
+          "    OPTION: -h|-r|-d DELIMETER|-z|-n or --help|--res|--resolution\n"
           "    COMMAND: CLOCK[PRECISION]\n"
           "             CLOCK: real|mono|pcpu|tcpu|monoraw|realcoa|monocoa|boot or 0c..15c\n"
-          "             PRECISION: -ns|-us|-ms|-nano|-micro|-milli or 0..9\n"
+          "             PRECISION: -ns|-us|-ms or -nano|-micro|-milli or 0..9\n"
+          "                        special PRECISION '+' is only for 'real'\n"
           "    TIME: SECONDS[.NANOSECONDS]\n"
-          "          print time diff (now - TIME) instead of current time\n"
+          "          print time diff (now - TIME) instead of current time\n\n"
           "    If no argument is provided, dtf prints current local time as human-readable format.\n",
           stderr);
     return 1;
