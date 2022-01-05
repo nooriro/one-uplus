@@ -62,6 +62,7 @@ struct config {
     bool newline;
 };
 
+void set_default_config(struct config *conf);
 int parse_argv(char *argv[], struct order *orders, int *count, struct config *conf);
 int parse_command(const char *str, clockid_t *clockid, int *precision);
 int startswith(const char *str, const char *pre);
@@ -86,22 +87,24 @@ int main(int argc, char *argv[]) {
         return ret;
     }
 
-    struct timespec now;
-    clock_gettime(CLOCK_REALTIME, &now);
-    struct tm nowtm;
-    localtime_r(&now.tv_sec, &nowtm);
-    char buf[32];
-    strftime(buf, sizeof(buf), "%Y%m%d-%H%M%S", &nowtm);
-    printf("%s-%09ld %d %ld %s\n", buf, now.tv_nsec,
-           nowtm.tm_isdst, nowtm.tm_gmtoff, nowtm.tm_zone);
+    struct order ord = {CLOCK_REALTIME, -1, 0, 0, {0, 0}};
+    struct config con;
+    set_default_config(&con);
+    print_orders(&ord, 1, &con);
     return 0;
 }
 
+void set_default_config(struct config *conf) {
+    if (conf) {
+        // default config values
+        conf->sep = "\n";        // field separator(=delimeter) string
+        conf->nulsep = false;    // use nul('\0') character instead of conf->sep
+        conf->newline = true;    // print trailing newline (or nul) at the end of record
+    }
+}
+
 int parse_argv(char *argv[], struct order *orders, int *count, struct config *conf) {
-    // default config values
-    conf->sep = "\n";        // field separator(=delimeter) string
-    conf->nulsep = false;    // use nul('\0') character instead of conf->sep
-    conf->newline = true;    // print trailing newline (or nul) at the end of record
+    set_default_config(conf);
     *count = 0;
 
     struct order *o = orders;
@@ -379,7 +382,7 @@ int print_usage() {
           "                        special PRECISION '+' is only for 'real'\n"
           "    TIME: SECONDS[.NANOSECONDS]\n"
           "          print time diff (now - TIME) instead of current time\n\n"
-          "    If no argument is provided, dtf prints current local time as human-readable format.\n",
+          "    If no argument is provided, dtf behaves as \"dtf real+\".\n",
           stderr);
     return 1;
 }
