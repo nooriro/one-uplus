@@ -6,6 +6,10 @@
 #include <stdlib.h>     // malloc() free()
 #include <sys/param.h>  // MIN(a,b) macro
 
+#if !defined (__LP64__)
+#include <time64.h>     // time64_t type, localtime64_r() function
+#endif
+
 #define MAX_PRECISION 9
 
 #define ERROR_NUMBER_FORMAT_INVALID_SEC  10
@@ -61,6 +65,7 @@ struct config {
     bool nulsep;
     bool newline;
     bool ultime;
+    bool time64;
 };
 
 void set_default_config(struct config *conf);
@@ -102,6 +107,7 @@ void set_default_config(struct config *conf) {
         conf->nulsep = false;    // use nul('\0') character instead of conf->sep
         conf->newline = true;    // print trailing newline (or nul) at the end of record
         conf->ultime = true;     // treat system time as unsigned long
+        conf->time64 = true;     // use localtime64_r() on 32-bit ABIs
     }
 }
 
@@ -143,6 +149,7 @@ int parse_argv(char *argv[], struct order *orders, int *count, struct config *co
                         case 'z':
                         case 'n':
                         case 's':
+                        case 'q':
                             break;
                         case 'd':
                             s += strlen(s);  // Do not check extra characters
@@ -174,6 +181,7 @@ int parse_argv(char *argv[], struct order *orders, int *count, struct config *co
                         case 'z': conf->nulsep = true; break;
                         case 'n': conf->newline = false; break;
                         case 's': conf->ultime = false; break;
+                        case 'q': conf->time64 = false; break;
                         default: break;
                     }
                 }
@@ -338,9 +346,19 @@ void print_order(struct order *o, struct config *conf) {
         diff_nsec += 1000000000;
     }
     if (o->precision == -1) {
-        time_t t = (time_t) diff_sec;
         struct tm tm;
+#if defined(__LP64__)
+        time_t t = (time_t) diff_sec;
         localtime_r(&t, &tm);
+#else
+        if (conf->time64) {
+            time64_t t = (time64_t) diff_sec;
+            localtime64_r(&t, &tm);
+        } else {
+            time_t t = (time_t) diff_sec;
+            localtime_r(&t, &tm);
+        }
+#endif
         char buf[32];
         strftime(buf, sizeof(buf), "%Y%m%d-%H%M%S", &tm);
         printf("%s-%09ld %d %ld %s", buf, diff_nsec,
@@ -384,7 +402,7 @@ int print_resolution() {
 int print_usage() {
     fputs("Usage: dtf [OPTION]... [COMMAND [TIME]]...\n"
           "    Print current time (or time diff to current time) of given clock(s).\n"
-          "    OPTION: -h|-r|-d DELIMITER|-z|-n|-s|--help|--res|--resolution\n"
+          "    OPTION: -h|-r|-d DELIMITER|-z|-n|-s|-q|--help|--res|--resolution\n"
           "    COMMAND: CLOCK[PRECISION]\n"
           "             CLOCK: real|mono|pcpu|tcpu|monoraw|realcoa|monocoa|boot or 0c..15c\n"
           "             PRECISION: -ns|-us|-ms|-nano|-micro|-milli or 0..9 or +\n"
