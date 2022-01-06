@@ -60,6 +60,7 @@ struct config {
     char *sep;
     bool nulsep;
     bool newline;
+    bool ultime;
 };
 
 void set_default_config(struct config *conf);
@@ -69,7 +70,7 @@ int startswith(const char *str, const char *pre);
 int parse_time(const char *str, long long *sec, long *nsec);
 
 void print_orders(struct order orders[], int count, struct config *conf);
-void print_order(struct order *o);
+void print_order(struct order *o, struct config *conf);
 int print_resolution();
 int print_usage();
 
@@ -100,6 +101,7 @@ void set_default_config(struct config *conf) {
         conf->sep = "\n";        // field separator(=delimiter) string
         conf->nulsep = false;    // use nul('\0') character instead of conf->sep
         conf->newline = true;    // print trailing newline (or nul) at the end of record
+        conf->ultime = true;     // treat system time as unsigned long
     }
 }
 
@@ -140,6 +142,7 @@ int parse_argv(char *argv[], struct order *orders, int *count, struct config *co
                         case 'r':
                         case 'z':
                         case 'n':
+                        case 's':
                             break;
                         case 'd':
                             s += strlen(s);  // Do not check extra characters
@@ -170,6 +173,7 @@ int parse_argv(char *argv[], struct order *orders, int *count, struct config *co
                             break;
                         case 'z': conf->nulsep = true; break;
                         case 'n': conf->newline = false; break;
+                        case 's': conf->ultime = false; break;
                         default: break;
                     }
                 }
@@ -301,28 +305,33 @@ void print_orders(struct order orders[], int count, struct config *conf) {
     if (conf->nulsep) {
         int i = 0;
         for (; i < count - 1; i++) {
-            print_order(&orders[i]);
+            print_order(&orders[i], conf);
             putchar('\0');
         }
         for (; i < count; i++) {
-            print_order(&orders[i]);
+            print_order(&orders[i], conf);
             if (conf->newline) { putchar('\0'); }
         }
     } else {
         int i = 0;
         for (; i < count - 1; i++) {
-            print_order(&orders[i]);
+            print_order(&orders[i], conf);
             fputs(conf->sep, stdout);
         }
         for (; i < count; i++) {
-            print_order(&orders[i]);
+            print_order(&orders[i], conf);
             if (conf->newline) { putchar('\n'); }
         }
     }
 }
 
-void print_order(struct order *o) {
-    long long diff_sec = (long long) o->now.tv_sec - o->prev_sec;
+void print_order(struct order *o, struct config *conf) {
+    long long diff_sec;
+    if (conf->ultime) {
+        diff_sec = (long long) (unsigned long) o->now.tv_sec - o->prev_sec;
+    } else {
+        diff_sec = (long long) o->now.tv_sec - o->prev_sec;
+    }
     long diff_nsec = o->now.tv_nsec - o->prev_nsec;
     if (diff_nsec < 0) {
         diff_sec--;
@@ -375,7 +384,7 @@ int print_resolution() {
 int print_usage() {
     fputs("Usage: dtf [OPTION]... [COMMAND [TIME]]...\n"
           "    Print current time (or time diff to current time) of given clock(s).\n"
-          "    OPTION: -h|-r|-d DELIMITER|-z|-n|--help|--res|--resolution\n"
+          "    OPTION: -h|-r|-d DELIMITER|-z|-n|-s|--help|--res|--resolution\n"
           "    COMMAND: CLOCK[PRECISION]\n"
           "             CLOCK: real|mono|pcpu|tcpu|monoraw|realcoa|monocoa|boot or 0c..15c\n"
           "             PRECISION: -ns|-us|-ms|-nano|-micro|-milli or 0..9 or +\n"
