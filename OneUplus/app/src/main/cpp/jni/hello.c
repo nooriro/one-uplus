@@ -1,10 +1,11 @@
-#include <stdio.h>
-#include <unistd.h>
-//#include <limits.h>
+#include <stdio.h>        // fprintf() fputs() putc() stdout stderr
+#include <string.h>       // strlen()
+#include <unistd.h>       // usleep()
+//#include <limits.h>       // INT_MIN
 
 int intlen(int n) {
 //    if (n < 0) return (n == INT_MIN) ? 11 : intlen(-n) + 1;   // including minus sign
-    // n must be non-negative
+    // Assume n is non-negative
     if (n < 10) return 1;
     if (n < 100) return 2;
     if (n < 1000) return 3;
@@ -23,7 +24,7 @@ int main(int argc, char *argv[]) {
     // intlen(i) + num of spaces == totallen  (constant for all i)
     for (int i = 0; i < argc; i++) {
         int numsp = totallen - intlen(i);
-        fprintf(stderr, "%*sargv %d: [%s]\n", numsp, "", i, argv[i]);
+        fprintf(stderr, "%*sargv %d: [%s] %zu\n", numsp, "", i, argv[i], strlen(argv[i]));
     }
     usleep(5000);
     for (int i = 0; i < argc; i++) {
