@@ -1,13 +1,39 @@
 #include <stdio.h>        // fprintf() fputs() putc() stdout stderr
 #include <string.h>       // strlen()
 #include <unistd.h>       // usleep()
-//#include <limits.h>       // INT_MIN
 #include <stdlib.h>       // getenv()
 #include <stdbool.h>      // true false
 #include <wchar.h>        // mbrtowc()
+//#include <limits.h>       // INT_MIN
 
 #define ANSI_START "\033[46m\033[48;5;30m"
 #define ANSI_END   "\033[0m"
+
+int intlen(int n);
+inline __attribute__((always_inline)) void in_esc(bool *state, bool ansi, FILE *fp);
+inline __attribute__((always_inline)) void out_esc(bool *state, bool ansi, FILE *fp);
+int printarg(char *arg, bool ansi, FILE *fp);
+
+
+int main(int argc, char *argv[]) {
+    const char *term = getenv("TERM");   // term == NULL if $TERM is not set
+    bool ansi = term && *term && strcmp(term, "dumb");
+    // totallen <-- intlen( maximum of i ) + num of minimal spaces
+    const int totallen = intlen(argc - 1) + 1;
+    for (int i = 0; i < argc; i++) {
+        // for all i,  intlen(i) + num of spaces == totallen (constant)
+        int numsp = totallen - intlen(i);
+        fprintf(stderr, "%*sargv %d: [", numsp, "", i);
+        int ret = printarg(argv[i], ansi, stderr);  // ret == strlen(argv[i])
+        fprintf(stderr, "] %d\n", ret);
+    }
+    usleep(5000);
+    for (int i = 0; i < argc; i++) {
+        fputs(argv[i], stdout);
+        putc('\0', stdout);
+    }
+    return 0;
+}
 
 int intlen(int n) {
 //    if (n < 0) return (n == INT_MIN) ? 11 : intlen(-n) + 1;   // including minus sign
@@ -124,24 +150,4 @@ int printarg(char *arg, bool ansi, FILE *fp) {
     } // end of for loop
     out_esc(&in, ansi, fp);
     return end - arg;
-}
-
-int main(int argc, char *argv[]) {
-    const char *term = getenv("TERM");   // term == NULL if $TERM is not set
-    bool ansi = term && *term && strcmp(term, "dumb");
-    // totallen <-- intlen( maximum of i ) + num of minimal spaces
-    const int totallen = intlen(argc - 1) + 1;
-    // intlen(i) + num of spaces == totallen  (constant for all i)
-    for (int i = 0; i < argc; i++) {
-        int numsp = totallen - intlen(i);
-        fprintf(stderr, "%*sargv %d: [", numsp, "", i);
-        int ret = printarg(argv[i], ansi, stderr);  // ret == strlen(argv[i])
-        fprintf(stderr, "] %d\n", ret);
-    }
-    usleep(5000);
-    for (int i = 0; i < argc; i++) {
-        fputs(argv[i], stdout);
-        putc('\0', stdout);
-    }
-    return 0;
 }
