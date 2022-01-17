@@ -12,7 +12,7 @@
 int intlen(int n);
 inline __attribute__((always_inline)) void in_esc(bool *state, bool ansi, FILE *fp);
 inline __attribute__((always_inline)) void out_esc(bool *state, bool ansi, FILE *fp);
-int printarg(char *arg, bool ansi, FILE *fp);
+int printarg(char *arg, bool ansi, FILE *fp, int *cbesc);
 
 
 int main(int argc, char *argv[]) {
@@ -24,8 +24,9 @@ int main(int argc, char *argv[]) {
         // for all i,  intlen(i) + num of spaces == totallen (constant)
         int numsp = totallen - intlen(i);
         fprintf(stderr, "%*sargv %d: [", numsp, "", i);
-        int ret = printarg(argv[i], ansi, stderr);  // ret == strlen(argv[i])
-        fprintf(stderr, "] %d\n", ret);
+        int cbesc;                                          // cbsec == count of escaped bytes
+        int ret = printarg(argv[i], ansi, stderr, &cbesc);  // ret == strlen(argv[i])
+        fprintf(stderr, (ansi && cbesc > 0) ? "] %d %d\033[K\n" : "] %d %d\n", ret, cbesc);
     }
     usleep(5000);
     for (int i = 0; i < argc; i++) {
@@ -66,7 +67,8 @@ void out_esc(bool *state, bool ansi, FILE *fp) {
     }
 }
 
-int printarg(char *arg, bool ansi, FILE *fp) {
+int printarg(char *arg, bool ansi, FILE *fp, int *cbesc) {
+    if (cbesc) { *cbesc = 0; }  // count of escaped bytes
     char *end = arg + strlen(arg);   // *end == '\0'
     bool in = false;  //  Are we in the middle of escape sequences?
     int ret = 0;      //  return value of mbrtowc()
@@ -111,8 +113,9 @@ int printarg(char *arg, bool ansi, FILE *fp) {
                 // 0800-FFFF:    3-byte  1110xxxx 10xxxxxx 10xxxxxx           (16 bits of code point)
                 // 10000-1FFFFF: 4-byte  11110xxx 10xxxxxx 10xxxxxx 10xxxxxx  (21 bits of code point)
                 // See: https://wiki.sei.cmu.edu/confluence/display/c/MSC10-C.+Character+encoding%3A+UTF8-related+issues
-                //  s += wc < (1 << 7) ? 0 : wc < (1 << 11) ? 1 : wc < (1 << 16) ? 2 : wc < (1 << 21) ? 3 : wc < (1 << 26) ? 4 : 5;
-                s += wc < 0x80 ? 0 : wc < 0x800 ? 1 : wc < 0x10000 ? 2 : wc < 0x200000 ? 3 : wc < 0x4000000 ? 4 : 5;
+                int cb = wc < 0x80 ? 1 : wc < 0x800 ? 2 : wc < 0x10000 ? 3 : wc < 0x200000 ? 4 : wc < 0x4000000 ? 5 : 6;
+                s += cb - 1;
+                if (cbesc) { *cbesc += cb; }
                 continue;
             } else {
                 // ---- Print multibyte character as raw UTF-8 bytes ---- //
@@ -141,6 +144,7 @@ int printarg(char *arg, bool ansi, FILE *fp) {
                 // Print c as "\ooo"
                 fprintf(fp, "\\%03o", (unsigned char) c);
             }
+            if (cbesc) { (*cbesc)++; }
         } else {
             // ---- Print single byte character as raw byte ---- //
             out_esc(&in, ansi, fp);
