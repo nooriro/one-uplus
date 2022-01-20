@@ -17,12 +17,17 @@ if [ -d /data/adb/modules/one-uplus/settings ]; then
   cp -p /data/adb/modules/one-uplus/settings/* "$MODPATH/settings/"
 fi
 
-ui_print "- Creating symlink"
+ui_print "- Creating symlinks"
 ABILIST="$(getprop ro.product.cpu.abilist)"
 cd "$MODPATH/scripts"
 for ABI in ${ABILIST//,/ }; do
-  [ -f "dtf_$ABI" ] && { ln -sf "dtf_$ABI" dtf; break; }
+  [ -f "dtf_$ABI" ] && { ln -s "dtf_$ABI" dtf; break; }
 done
+cd - >/dev/null
+cd "$MODPATH"
+ln -s switches/on on
+ln -s switches/off off
+ln -s switches/refresh refresh
 cd - >/dev/null
 
 ui_print "- Setting permissions"
